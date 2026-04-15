@@ -75,6 +75,12 @@ langchain-pydantic-extractor/
 ├── requirements.txt
 ├── main.py               # Entry point — thin orchestrator
 ├── outputs/              # Saved run results (--save flag)
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py       # Shared fixtures
+│   ├── test_model.py     # Pydantic model validation tests
+│   ├── test_chain.py     # build_chain() unit tests
+│   └── test_integration.py  # End-to-end chain wiring tests
 └── src/
     ├── __init__.py
     ├── model.py          # MainframeSnapshot Pydantic model
@@ -131,6 +137,31 @@ class MainframeSnapshot(BaseModel):
 ```
 
 `integration_type` is constrained to four valid values via `Literal`. All fields include `Field(description=...)` — these descriptions are consumed by `PydanticOutputParser` to generate the format instructions injected into the prompt, directly affecting output quality.
+
+---
+
+## Tests
+
+8 tests across three files. Run with:
+
+```bash
+pytest -v
+```
+
+### test_model.py — Pydantic validation
+Pure unit tests, no mocking. Verifies that `MainframeSnapshot` accepts valid data, rejects an invalid `integration_type` value not in the `Literal`, and raises `ValidationError` on a missing required field.
+
+### test_chain.py — build_chain() logic
+Unit tests for provider switching. Uses pytest's built-in `monkeypatch` fixture to temporarily set `LLM_PROVIDER` in the environment for each test. Verifies that `build_chain()` returns a `RunnableSequence` for both `anthropic` and `openai`, and raises `ValueError` for an unknown provider. No mocking needed — `ChatAnthropic` and `ChatOpenAI` are pure Python object construction with no API calls at init time.
+
+### test_integration.py — chain wiring
+Tests the full `prompt | llm | parser` chain end to end without hitting a real API. Uses LangChain's built-in `FakeListChatModel` from `langchain_community` rather than `unittest.mock.MagicMock`. This is the correct approach for LangChain chains — `RunnableSequence` is a Pydantic model internally and rejects direct attribute assignment, making `MagicMock` unreliable for replacing `invoke`. `FakeListChatModel` is injected in place of the real LLM via `unittest.mock.patch`, fed a pre-constructed JSON string matching the `MainframeSnapshot` schema. The parser runs against this controlled response, verifying the full wiring produces a valid typed object.
+
+**Why not `MagicMock` for the chain?**  
+`RunnableSequence.invoke` cannot be directly replaced via `MagicMock` or `patch.object` — the Pydantic-based internals reject field assignment. The correct strategy is to mock the LLM component itself, letting the rest of the chain — prompt rendering, format instruction injection, parsing — execute for real against a controlled response.
+
+**Why no real API calls in integration tests?**  
+These tests are designed to run safely at every CI/CD gate. Real API calls introduce external dependency, latency, cost, and failure modes outside the codebase. The `FakeListChatModel` approach verifies component wiring without any of those risks.
 
 ---
 

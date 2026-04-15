@@ -7,14 +7,11 @@ from langchain_core.prompts import ChatPromptTemplate
 from src.model import MainframeSnapshot
 from dotenv import load_dotenv
 
-load_dotenv(override=True )
-
-provider = os.getenv("LLM_PROVIDER", "anthropic")
-openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
-
-
 def build_chain():
+    # Read the environment variables for configuration
+    provider = os.getenv("LLM_PROVIDER", "anthropic")
+    openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
 
     parser = PydanticOutputParser(pydantic_object=MainframeSnapshot)
 

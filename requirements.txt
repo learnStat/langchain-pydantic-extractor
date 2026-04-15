@@ -1,4 +1,6 @@
 langchain==1.2.15
 langchain-anthropic==1.4.0
 langchain-openai
+langchain_community
 python-dotenv
+pytest
