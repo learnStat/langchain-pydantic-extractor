@@ -90,6 +90,7 @@ langchain-pydantic-extractor/
 ---
 
 ## Setup
+LangSmith tracing is optional but recommended. If LANGSMITH_API_KEY is not set, tracing is silently skipped.
 
 ```bash
 git clone https://github.com/learnStat/langchain-pydantic-extractor
@@ -106,6 +107,9 @@ OPENAI_API_KEY=your_key_here
 LLM_PROVIDER=anthropic
 ANTHROPIC_MODEL=claude-haiku-4-5
 OPENAI_MODEL=gpt-4o-mini
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=your_langsmith_key_here
+LANGSMITH_PROJECT=langchain-pydantic-extractor
 ```
 
 ---
